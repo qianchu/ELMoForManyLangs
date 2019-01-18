@@ -5,8 +5,9 @@ def h5py2word2vec(h5py_file,output_f):
     with open(output_f,'w') as output_f:
         f=h5py.File(h5py_file)
         output_f.write('{0} {1}\n'.format(str(len(f.keys())),len(f[list(f.keys())[0]][0])))
-        for word in f.keys():
-            output_f.write(word+' '+' '.join([str(v) for v in f[word][0]])+'\n')
+        for sent in f.keys():
+            for i, word in enumerate(sent.split('\t')):
+                output_f.write('{0}||{1}'.format(sent,i)+' '+' '.join([str(v) for v in f[sent][i]])+'\n')
 
 if __name__=='__main__':
     import sys
