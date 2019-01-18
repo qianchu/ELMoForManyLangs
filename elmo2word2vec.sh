@@ -5,6 +5,7 @@ model_path=$2
 output_layer=$3
 gpu=$4
 batch=$5
+outputf=$6
 
 
 # conll vocab
@@ -17,4 +18,6 @@ python -m elmoformanylangs test   --batch $batch  --input_format conll  --gpu $g
 echo 'output file: '$output_prefix_ch'.ly'$output_layer'.hdf5'
 
 # convert to word2vec
-python ./h5py2word2vec.py $output_prefix_ch'.ly'$output_layer'.hdf5' $output_prefix_ch'.ly'$output_layer'.word2vec'
+if [ $outputf == 'word2vec' ]; then
+    python ./h5py2word2vec.py $output_prefix_ch'.ly'$output_layer'.hdf5' $output_prefix_ch'.ly'$output_layer'.word2vec'
+fi
