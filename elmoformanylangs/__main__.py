@@ -267,7 +267,7 @@ def test_main():
         else:
           payload = data[output_layer]
         if output_format == 'hdf5':
-          fout.create_dataset(sent, payload.shape, dtype='float32', data=payload)
+          fout.create_dataset(sent, payload.shape, dtype='float32', compression="gzip", compression_opts=9, data=payload)
         else:
           for word, row in zip(text, payload):
             print('{0}\t{1}'.format(word, '\t'.join(['{0:.8f}'.format(elem) for elem in row])), file=fout)
