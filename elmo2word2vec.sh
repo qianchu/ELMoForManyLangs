@@ -18,6 +18,6 @@ python -m elmoformanylangs test   --batch $batch  --input_format conll  --gpu $g
 echo 'output file: '$output_prefix_ch'.ly'$output_layer'.hdf5'
 
 # convert to word2vec
-if [ $outputf == 'word2vec' ]; then
+if [ "${outputf}" == "word2vec" ]; then
     python ./h5py2word2vec.py $output_prefix_ch'.ly'$output_layer'.hdf5' $output_prefix_ch'.ly'$output_layer'.word2vec'
 fi
