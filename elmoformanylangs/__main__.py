@@ -45,7 +45,7 @@ def read_corpus(path, max_chars=None):
   return dataset, textset
 
 
-def read_conll_corpus(path, max_chars=None):
+def read_conll_corpus(path, batchsize, max_chars=None):
   """
   read text in CoNLL-U format.
 
@@ -55,6 +55,7 @@ def read_conll_corpus(path, max_chars=None):
   """
   dataset = []
   textset = []
+  cn=0
   with codecs.open(path, 'r', encoding='utf-8') as fin:
     for payload in fin.read().strip().split('\n\n'):
       data = ['<bos>']
@@ -73,7 +74,12 @@ def read_conll_corpus(path, max_chars=None):
       data.append('<eos>')
       dataset.append(data)
       textset.append(text)
-  return dataset, textset
+      cn+=1
+      if cn>=batchsize:
+        yield dataset,textset
+        cn=0
+        dataset=[]
+        textset=[]
 
 
 def read_conll_char_corpus(path, max_chars=None):
@@ -213,13 +219,11 @@ def test_main():
       read_conll_char_corpus if args.input_format == 'conll_char' else read_conll_char_vi_corpus))
 
   if config['token_embedder']['name'].lower() == 'cnn':
-    test, text = read_function(args.input, config['token_embedder']['max_characters_per_token'])
+    data_gen= read_function(args.input, args.batch_size,config['token_embedder']['max_characters_per_token'])
   else:
-    test, text = read_function(args.input)
+    data_gen = read_function(args.input, args.batch_size)
 
-  # create test batches from the input data.
-  test_w, test_c, test_lens, test_masks, test_text = create_batches(
-    test, args.batch_size, word_lexicon, char_lexicon, config, text=text)
+
 
   # configure the model to evaluation mode.
   model.eval()
@@ -240,42 +244,46 @@ def test_main():
       handlers[output_format, output_layer] = \
         h5py.File(filename, 'w') if output_format == 'hdf5' else open(filename, 'w')
 
-  for w, c, lens, masks, texts in zip(test_w, test_c, test_lens, test_masks, test_text):
-    output = model.forward(w, c, masks)
-    for i, text in enumerate(texts):
-      sent = '\t'.join(text)
-      sent = sent.replace('.', '$period$')
-      sent = sent.replace('/', '$backslash$')
-      if sent in sent_set:
-        continue
-      sent_set.add(sent)
-      if config['encoder']['name'].lower() == 'lstm':
-        data = output[i, 1:lens[i]-1, :].data
-        if use_cuda:
-          data = data.cpu()
-        data = data.numpy()
-      elif config['encoder']['name'].lower() == 'elmo':
-        data = output[:, i, 1:lens[i]-1, :].data
-        if use_cuda:
-          data = data.cpu()
-        data = data.numpy()
+  # create test batches from the input data.
+  for test, text in data_gen:
+    test_w, test_c, test_lens, test_masks, test_text = create_batches(
+      test, args.batch_size, word_lexicon, char_lexicon, config, text=text)
+    for w, c, lens, masks, texts in zip(test_w, test_c, test_lens, test_masks, test_text):
+      output = model.forward(w, c, masks)
+      for i, text in enumerate(texts):
+        sent = '\t'.join(text)
+        sent = sent.replace('.', '$period$')
+        sent = sent.replace('/', '$backslash$')
+        if sent in sent_set:
+          continue
+        sent_set.add(sent)
+        if config['encoder']['name'].lower() == 'lstm':
+          data = output[i, 1:lens[i]-1, :].data
+          if use_cuda:
+            data = data.cpu()
+          data = data.numpy()
+        elif config['encoder']['name'].lower() == 'elmo':
+          data = output[:, i, 1:lens[i]-1, :].data
+          if use_cuda:
+            data = data.cpu()
+          data = data.numpy()
 
-      for (output_format, output_layer) in handlers:
-        fout = handlers[output_format, output_layer]
-        if output_layer == -1:
-          payload = np.average(data, axis=0)
-        else:
-          payload = data[output_layer]
-        if output_format == 'hdf5':
-          fout.create_dataset(sent, payload.shape, dtype='float32', compression="gzip", compression_opts=9, data=payload)
-        else:
-          for word, row in zip(text, payload):
-            print('{0}\t{1}'.format(word, '\t'.join(['{0:.8f}'.format(elem) for elem in row])), file=fout)
-          print('', file=fout)
+        for (output_format, output_layer) in handlers:
+          fout = handlers[output_format, output_layer]
+          if output_layer == -1:
+            payload = np.average(data, axis=0)
+          else:
+            payload = data[output_layer]
+          if output_format == 'hdf5':
+            fout.create_dataset(sent, payload.shape, dtype='float32', compression="gzip", compression_opts=9, data=payload)
+          else:
+            for word, row in zip(text, payload):
+              print('{0}\t{1}'.format(word, '\t'.join(['{0:.8f}'.format(elem) for elem in row])), file=fout)
+            print('', file=fout)
 
-      cnt += 1
-      if cnt % 1000 == 0:
-        logging.info('Finished {0} sentences.'.format(cnt))
+        cnt += 1
+        if cnt % 1000 == 0:
+          logging.info('Finished {0} sentences.'.format(cnt))
   for _, handler in handlers.items():
     handler.close()
 
