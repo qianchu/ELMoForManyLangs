@@ -80,6 +80,8 @@ def read_conll_corpus(path, batchsize, max_chars=None):
         cn=0
         dataset=[]
         textset=[]
+  if dataset!=[]:
+    yield dataset,textset
 
 
 def read_conll_char_corpus(path, max_chars=None):
@@ -249,6 +251,7 @@ def test_main():
     test_w, test_c, test_lens, test_masks, test_text = create_batches(
       test, args.batch_size, word_lexicon, char_lexicon, config, text=text)
     for w, c, lens, masks, texts in zip(test_w, test_c, test_lens, test_masks, test_text):
+      print (texts)
       output = model.forward(w, c, masks)
       for i, text in enumerate(texts):
         sent = '\t'.join(text)
