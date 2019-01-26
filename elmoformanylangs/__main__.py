@@ -73,6 +73,7 @@ def read_conll_corpus(path, batchsize, sent_max_length=100, max_chars=None):
         data.append(token)
       data.append('<eos>')
       if len(data)>=sent_max_length:
+        print ('{0} length exceeding max sent length {1}'.format(len(data), sent_max_length))
         continue
       dataset.append(data)
       textset.append(text)
@@ -224,9 +225,9 @@ def test_main():
       read_conll_char_corpus if args.input_format == 'conll_char' else read_conll_char_vi_corpus))
 
   if config['token_embedder']['name'].lower() == 'cnn':
-    data_gen= read_function(args.input, args.batch_size,config['token_embedder']['max_characters_per_token'])
+    data_gen= read_function(args.input,args.batch_size,args.sent_max_len,config['token_embedder']['max_characters_per_token'])
   else:
-    data_gen = read_function(args.input, args.batch_size)
+    data_gen = read_function(args.input,args.batch_size,args.sent_max_len)
 
 
 
