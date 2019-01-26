@@ -45,7 +45,7 @@ def read_corpus(path, max_chars=None):
   return dataset, textset
 
 
-def read_conll_corpus(path, batchsize, max_chars=None):
+def read_conll_corpus(path, batchsize, sent_max_length=100, max_chars=None):
   """
   read text in CoNLL-U format.
 
@@ -72,6 +72,8 @@ def read_conll_corpus(path, batchsize, max_chars=None):
           token = token[:max_chars - 2]
         data.append(token)
       data.append('<eos>')
+      if len(data)>=sent_max_length:
+        continue
       dataset.append(data)
       textset.append(text)
       cn+=1
@@ -163,6 +165,7 @@ def test_main():
                                           'of 3 layers.')
   cmd.add_argument("--model", required=True, help="the path to the model.")
   cmd.add_argument("--batch_size", "--batch", type=int, default=1, help='the batch size.')
+  cmd.add_argument('--sent_max_len', "--max", type=int, default=100, help='sent maximum length')
   args = cmd.parse_args(sys.argv[2:])
 
   if args.gpu >= 0:
