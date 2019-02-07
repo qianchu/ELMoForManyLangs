@@ -103,6 +103,10 @@ $ python -m elmoformanylangs test \
     --output_prefix /path/to/your/output \
     --output_format hdf5 \
     --output_layer -1
+    
+    
+Or from txt to hdf5 and word2vec:
+bash elmo2word2vec.sh ../../../mnt/hdd/corpora/crossling_contextualized_embed/ch_tra.txt.parallel ./models/chinese_elmo/ -1 0 20 hdf5 ../../../mnt/hdd/corpora/crossling_contextualized_embed/ch_tra 100
 ```
 
 It will dump an hdf5 encoded `dict` onto the disk, where the key is `'\t'` separated
