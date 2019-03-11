@@ -199,7 +199,7 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
             tokens_b.pop()
 
 
-def read_examples(input_file, example_batch):
+def read_examples(input_file, example_batch,max_length):
     """Read a list of `InputExample`s from an input file."""
     examples = []
     with open(input_file, "r", encoding='utf-8') as reader:
@@ -208,9 +208,12 @@ def read_examples(input_file, example_batch):
             if not line:
                 break
             line = line.strip().split('\t')[0]
+            line_lst=line.split()
+            if len(line_lst)>max_length:
+                continue
 
             examples.append(
-                line.split())
+                line_lst)
             if len(examples) >= example_batch:
                 yield examples
                 examples = []
@@ -328,6 +331,7 @@ def main():
                         action='store_true',
                         help="Whether not to use CUDA when available")
     parser.add_argument('--gpu', type=int, help='specify the gpu to use')
+    parser.add_argument('--sent_max', type=str, help='sent maximum lenght')
 
     args = parser.parse_args()
 
@@ -362,7 +366,7 @@ def main():
     #    model = torch.nn.DataParallel(model)
 
     example_counter = 0
-    for examples in read_examples(args.input_file, args.example_batch):
+    for examples in read_examples(args.input_file, args.example_batch,args.sent_max):
         example_counter += 1
         print('processed {0} examples'.format(str(args.example_batch * example_counter)))
         examples2embeds(examples, model, device, writer, args)
