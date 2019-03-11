@@ -331,7 +331,7 @@ def main():
                         action='store_true',
                         help="Whether not to use CUDA when available")
     parser.add_argument('--gpu', type=int, help='specify the gpu to use')
-    parser.add_argument('--sent_max', type=str, help='sent maximum lenght')
+    parser.add_argument('--sent_max', type=int, help='sent maximum lenght')
 
     args = parser.parse_args()
 
