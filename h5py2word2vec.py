@@ -4,6 +4,9 @@ import h5py
 def h5py2word2vec(h5py_file,output_f):
     with open(output_f,'w') as output_f:
         f=h5py.File(h5py_file)
+        f = {key: f[key] for key in f.keys() if '[CLS]' not in key}
+
+
         output_f.write('{0} {1}\n'.format(str(len(f.keys())),len(f[list(f.keys())[0]][0])))
         for sent in f.keys():
             for i, word in enumerate(sent.split('\t')):
